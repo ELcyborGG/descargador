@@ -1,0 +1,6 @@
+build/
+dist/
+ffmpeg-8.0.1-essentials_build/
+historial.json
+*.spec
+__pycache__/
