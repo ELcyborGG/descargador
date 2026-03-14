@@ -35,7 +35,7 @@ def download():
                     }
                 else:
                     opciones = {
-                        "format": "best[ext=mp4]/best",
+                        "format": "best",
                         "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
                         "cookiefile": "www.youtube.com_cookies.txt",
                         "quiet": True,
