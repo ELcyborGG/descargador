@@ -6,6 +6,7 @@ import threading
 
 app = Flask(__name__)
 archivos_listos = {}
+COOKIES = os.path.join(os.path.dirname(__file__), "www.youtube.com_cookies.txt")
 
 @app.route("/")
 def index():
@@ -30,14 +31,14 @@ def download():
                         "format": "bestaudio/best",
                         "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
                         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}],
-                        "cookiefile": "www.youtube.com_cookies.txt",
+                        "cookiefile": COOKIES,
                         "quiet": True,
                     }
                 else:
                     opciones = {
                         "format": "best",
                         "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
-                        "cookiefile": "www.youtube.com_cookies.txt",
+                        "cookiefile": COOKIES,
                         "quiet": True,
                     }
                 with yt_dlp.YoutubeDL(opciones) as ydl:
