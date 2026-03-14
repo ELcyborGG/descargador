@@ -36,7 +36,7 @@ def download():
                     }
                 else:
                     opciones = {
-                        "format": "best",
+                        "format": "bestvideo[height<=720]+bestaudio/bestvideo+bestaudio/best",
                         "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
                         "cookiefile": COOKIES,
                         "quiet": True,
