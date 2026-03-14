@@ -30,12 +30,14 @@ def download():
                         "format": "bestaudio/best",
                         "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
                         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}],
+                        "cookiefile": "www.youtube.com_cookies.txt",
                         "quiet": True,
                     }
                 else:
                     opciones = {
                         "format": "best[ext=mp4]/best",
                         "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
+                        "cookiefile": "www.youtube.com_cookies.txt",
                         "quiet": True,
                     }
                 with yt_dlp.YoutubeDL(opciones) as ydl:
