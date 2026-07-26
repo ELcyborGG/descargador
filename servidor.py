@@ -26,7 +26,10 @@ def download():
         def procesar():
             try:
                 opciones_base = {
-                    "outtmpl": f"{tmpdir}/%(title)s.%(ext)s",
+                    # Truncamos el titulo a 80 caracteres para evitar "File name too long"
+                    # en posts con descripciones/hashtags muy largos (comun en TikTok/Facebook)
+                    "outtmpl": f"{tmpdir}/%(title).80s.%(ext)s",
+                    "restrictfilenames": True,
                     "quiet": True,
                     "no_warnings": True,
                     "http_headers": {
@@ -35,14 +38,11 @@ def download():
                     },
                 }
  
-                # Solo agrega cookies + player_client android si es un link de YouTube (Instagram/TikTok siguen igual)
+                # Solo agrega cookies si es un link de YouTube (Instagram/TikTok siguen sin cookies)
                 if "youtube.com" in url or "youtu.be" in url:
                     cookies_path = os.path.join(os.path.dirname(__file__), "www.youtube.com_cookies.txt")
                     if os.path.exists(cookies_path):
                         opciones_base["cookiefile"] = cookies_path
-                    opciones_base["extractor_args"] = {
-                        "youtube": {"player_client": ["android"]}
-                    }
  
                 if formato == "mp3":
                     opciones = {
