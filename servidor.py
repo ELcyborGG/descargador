@@ -35,6 +35,12 @@ def download():
                     },
                 }
 
+                # Solo agrega cookies si es un link de YouTube (Instagram/TikTok siguen sin cookies)
+                if "youtube.com" in url or "youtu.be" in url:
+                    cookies_path = os.path.join(os.path.dirname(__file__), "www.youtube.com_cookies.txt")
+                    if os.path.exists(cookies_path):
+                        opciones_base["cookiefile"] = cookies_path
+
                 if formato == "mp3":
                     opciones = {
                         **opciones_base,
