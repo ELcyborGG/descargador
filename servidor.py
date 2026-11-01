@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 import yt_dlp
+import importlib
+import importlib.util
 import os
 import re
 import sys
@@ -71,8 +73,33 @@ def _buscar_imagenes(carpeta):
     return encontradas
 
 
+_gd_lock = threading.Lock()
+
+
+def asegurar_gallery_dl():
+    """Render a veces no instala gallery-dl desde requirements.txt. Si falta, se instala solo aqui."""
+    with _gd_lock:
+        if importlib.util.find_spec("gallery_dl"):
+            return True, ""
+        try:
+            r = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--quiet", "gallery-dl"],
+                capture_output=True, text=True, timeout=240,
+            )
+        except Exception as e:
+            return False, f"no pude instalar gallery-dl: {e}"
+        importlib.invalidate_caches()
+        if importlib.util.find_spec("gallery_dl"):
+            return True, ""
+        cola = " ".join((r.stderr or r.stdout or "").strip().splitlines()[-2:])[:200]
+        return False, f"no pude instalar gallery-dl en el servidor: {cola}"
+
+
 def _gallery_dl(url, tmpdir):
     """Intenta bajar las imagenes con gallery-dl. Devuelve (rutas, detalle_del_error)."""
+    instalado, motivo = asegurar_gallery_dl()
+    if not instalado:
+        return [], motivo
     cmd = [sys.executable, "-m", "gallery_dl", "-D", tmpdir, "--no-mtime", "-R", "3"]
     cookies = cookies_de(url)
     if cookies:
@@ -200,8 +227,10 @@ def download():
 
                 if "youtube.com" in url or "youtu.be" in url:
                     cookies_path = buscar_cookies("www.youtube.com_cookies.txt")
-                    if cookies_path:
-                        opciones_base["cookiefile"] = cookies_path
+                else:
+                    cookies_path = cookies_de(url)  # Instagram / Facebook / TikTok si hay cookies guardadas
+                if cookies_path:
+                    opciones_base["cookiefile"] = cookies_path
 
                 if formato == "mp3":
                     opciones = {
@@ -221,9 +250,16 @@ def download():
                         ydl.download([url])
                 except Exception as e:
                     # Si no era un video sino una publicacion de fotos, se bajan las fotos
-                    if formato == "mp4" and parece_publicacion_de_fotos(str(e)):
-                        entregar_fotos()
-                        return
+                    redes = ("instagram.com", "tiktok.com", "facebook.com", "fb.watch", "fb.com")
+                    if formato == "mp4" and any(x in url.lower() for x in redes):
+                        foto = parece_publicacion_de_fotos(str(e))
+                        try:
+                            entregar_fotos()
+                            return
+                        except RuntimeError as e2:
+                            if foto:
+                                raise e2
+                            # No parecia de fotos: se muestra el error original del video
                     raise
 
                 archivo = next((os.path.join(tmpdir, f) for f in os.listdir(tmpdir)), None)
